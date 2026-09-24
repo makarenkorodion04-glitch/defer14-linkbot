@@ -9,7 +9,7 @@ TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "defer14").lower().lstrip("@")
 INTERVAL_SECONDS = int(os.environ.get("SEND_INTERVAL_HOURS", "3")) * 3600
 SEND_INTERVAL_HOURS = int(os.environ.get("SEND_INTERVAL_HOURS", "3"))
-LONG_POLL_SECONDS = int(os.environ.get("LONG_POLL_SECONDS", "0"))
+SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", "240"))
 DATA_FILE = "data.json"
 
 DEFAULT_CONTENT = "Твоё сообщение здесь"
@@ -178,9 +178,9 @@ def process_updates(updates, data):
 def main():
     import time as _time
 
+    start = _time.time()
     data = load()
-    deadline = _time.time() + LONG_POLL_SECONDS if LONG_POLL_SECONDS else 0
-    while True:
+    while _time.time() - start < SESSION_SECONDS:
         data = process_updates(get_updates(data["offset"]), data)
         now = datetime.now(timezone.utc).timestamp()
         if (
@@ -192,13 +192,8 @@ def main():
             data["last_sent"] = now
             print("Broadcast sent:", sent)
         save(data)
-        if not LONG_POLL_SECONDS:
-            print("Done. offset:", data["offset"])
-            return
-        if _time.time() >= deadline:
-            print("Session end. offset:", data["offset"])
-            return
         _time.sleep(1)
+    print("Session end. offset:", data["offset"])
 
 
 if __name__ == "__main__":
