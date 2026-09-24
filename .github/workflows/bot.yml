@@ -3,7 +3,6 @@ name: telegram-bot
 on:
   schedule:
     - cron: "*/5 * * * *"
-    - cron: "0 */3 * * *"
   workflow_dispatch:
 
 permissions:
@@ -28,7 +27,7 @@ jobs:
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           ADMIN_USERNAME: defer14
-          SEND_INTERVAL_HOURS: "3"
+          SEND_INTERVAL_HOURS: "1"
 
       - name: Commit changes
         run: |
