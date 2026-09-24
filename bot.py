@@ -8,6 +8,8 @@ API = "https://api.telegram.org"
 TOKEN = os.environ["BOT_TOKEN"]
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "defer14").lower().lstrip("@")
 INTERVAL_SECONDS = int(os.environ.get("SEND_INTERVAL_HOURS", "3")) * 3600
+SEND_INTERVAL_HOURS = int(os.environ.get("SEND_INTERVAL_HOURS", "3"))
+LONG_POLL_SECONDS = int(os.environ.get("LONG_POLL_SECONDS", "0"))
 DATA_FILE = "data.json"
 
 DEFAULT_CONTENT = "Твоё сообщение здесь"
@@ -70,7 +72,7 @@ def panel_text(data):
         "👑 Админ-панель\n\n"
         f"📝 Сообщение: {data['content']}\n"
         f"👥 Подписчиков: {len(data['users'])}\n"
-        "⏱ Интервал рассылки: 3 ч"
+        f"⏱ Интервал рассылки: {SEND_INTERVAL_HOURS} ч"
     )
 
 
@@ -78,7 +80,7 @@ def get_updates(offset):
     res = call(
         "getUpdates",
         offset=offset,
-        timeout=0,
+        timeout=30,
         allowed_updates=["message", "callback_query"],
     )
     return res.get("result", []) if res.get("ok") else []
@@ -101,7 +103,8 @@ def process_updates(updates, data):
                 call(
                     "sendMessage",
                     chat_id=chat,
-                    text="Привет! Ты подписан на рассылку.\nНовые сообщения будут приходить каждые 3 часа.",
+                    text="Привет! Ты подписан на рассылку.\nНовые сообщения будут приходить каждые "
+                    f"{SEND_INTERVAL_HOURS} часа.",
                 )
             elif text == "/link":
                 call("sendMessage", chat_id=chat, text=data["content"])
@@ -141,7 +144,7 @@ def process_updates(updates, data):
                     chat_id=chat,
                     text="📊 Статистика\n\n"
                     f"👥 Подписчиков: {len(data['users'])}\n"
-                    "⏱ Рассылка каждые 3 ч\n"
+                    f"⏱ Рассылка каждые {SEND_INTERVAL_HOURS} ч\n"
                     f"📝 Сообщение: {data['content']}",
                     reply_markup=panel_keyboard(),
                 )
@@ -173,19 +176,29 @@ def process_updates(updates, data):
 
 
 def main():
+    import time as _time
+
     data = load()
-    data = process_updates(get_updates(data["offset"]), data)
-    now = datetime.now(timezone.utc).timestamp()
-    if (
-        data["users"]
-        and data["content"].strip()
-        and (now - data["last_sent"]) >= INTERVAL_SECONDS
-    ):
-        sent = broadcast(data["content"])
-        data["last_sent"] = now
-        print("Broadcast sent:", sent)
-    save(data)
-    print("Done. offset:", data["offset"])
+    deadline = _time.time() + LONG_POLL_SECONDS if LONG_POLL_SECONDS else 0
+    while True:
+        data = process_updates(get_updates(data["offset"]), data)
+        now = datetime.now(timezone.utc).timestamp()
+        if (
+            data["users"]
+            and data["content"].strip()
+            and (now - data["last_sent"]) >= INTERVAL_SECONDS
+        ):
+            sent = broadcast(data["content"])
+            data["last_sent"] = now
+            print("Broadcast sent:", sent)
+        save(data)
+        if not LONG_POLL_SECONDS:
+            print("Done. offset:", data["offset"])
+            return
+        if _time.time() >= deadline:
+            print("Session end. offset:", data["offset"])
+            return
+        _time.sleep(1)
 
 
 if __name__ == "__main__":
