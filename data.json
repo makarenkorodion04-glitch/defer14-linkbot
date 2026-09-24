@@ -1,7 +1,9 @@
 {
-  "users": [],
+  "users": [
+    5164634180
+  ],
   "content": "Твоё сообщение здесь",
-  "last_sent": 0,
+  "last_sent": 1790269111.211851,
   "pending": false,
-  "offset": 0
+  "offset": 538757564
 }
