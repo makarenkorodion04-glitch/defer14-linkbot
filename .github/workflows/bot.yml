@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: linkbot
+  cancel-in-progress: true
+
 jobs:
   bot:
     runs-on: ubuntu-latest
@@ -28,7 +32,7 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           ADMIN_USERNAME: defer14
           SEND_INTERVAL_HOURS: "1"
-          LONG_POLL_SECONDS: "21000"
+          SESSION_SECONDS: "240"
 
       - name: Commit changes
         run: |
