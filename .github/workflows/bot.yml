@@ -11,7 +11,7 @@ permissions:
 jobs:
   bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +28,7 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           ADMIN_USERNAME: defer14
           SEND_INTERVAL_HOURS: "1"
+          LONG_POLL_SECONDS: "21000"
 
       - name: Commit changes
         run: |
