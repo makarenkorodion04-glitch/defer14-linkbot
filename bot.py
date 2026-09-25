@@ -12,7 +12,7 @@ SEND_INTERVAL_HOURS = int(os.environ.get("SEND_INTERVAL_HOURS", "3"))
 SESSION_SECONDS = int(os.environ.get("SESSION_SECONDS", "240"))
 DATA_FILE = "data.json"
 
-DEFAULT_CONTENT = "Твоё сообщение здесь"
+DEFAULT_CONTENT = "Заходите на наш проект"
 
 
 def load():
@@ -26,6 +26,9 @@ def load():
     data.setdefault("last_sent", 0)
     data.setdefault("pending", False)
     data.setdefault("offset", 0)
+    if data.get("content", "").strip() == "Твоё сообщение здесь":
+        data["content"] = DEFAULT_CONTENT
+        data["last_sent"] = 0
     return data
 
 
